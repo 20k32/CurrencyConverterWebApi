@@ -41,6 +41,7 @@ namespace CurrencyConverter.WebApi
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCutsomExcepionHandlerMiddleware();
 
             app.UseRouting();
             app.UseHttpsRedirection();

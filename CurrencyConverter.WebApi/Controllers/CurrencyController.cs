@@ -67,6 +67,11 @@ namespace CurrencyConverter.WebApi.Controllers
 
             result = await Mediator.Send(new GetSpecificCurrencyQuery(currency));
 
+            if(result == null)
+            {
+                return new JsonResult(new { Name = "Currency not Found" });
+            }
+
             return new JsonResult(result);
         }
 
@@ -81,6 +86,11 @@ namespace CurrencyConverter.WebApi.Controllers
             }
 
             result = await Mediator.Send(new GetCurrencyLikeQuery(currency));
+
+            if (result.CurrencyList.Count == 0)
+            {
+                return new JsonResult(new { Name = "No matches with this result" });
+            }
 
             return new JsonResult(result.CurrencyList);
         }
