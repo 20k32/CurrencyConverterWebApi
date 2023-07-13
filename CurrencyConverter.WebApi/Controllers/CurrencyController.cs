@@ -67,7 +67,7 @@ namespace CurrencyConverter.WebApi.Controllers
 
             result = await Mediator.Send(new GetSpecificCurrencyQuery(currency));
 
-            if(result == null)
+            if (result == null)
             {
                 return new JsonResult(new { Name = "Currency not Found" });
             }
@@ -95,5 +95,31 @@ namespace CurrencyConverter.WebApi.Controllers
             return new JsonResult(result.CurrencyList);
         }
 
+        [HttpGet(Name = "CompareCurrencies")]
+        public async Task<IResult> CompareCurrencies([FromQuery] CurrencyFromQueryModel? model)
+        {
+            if(model == null || model.Left == null || model.Right == null)
+            {
+                Results.Json(new { Name = "Incorrect condition" });
+            }
+
+            if (!Cache.TryGetValue<ApiRequestModel>(CACHE_VALUE_KEY, out var _))
+            {
+                await UpdateDatabseAndMemoryCache();
+            }
+
+            var leftCurrency = await Mediator.Send(new GetSpecificCurrencyQuery(model!.Left!.Name));
+            var rightCurrency = await Mediator.Send(new GetSpecificCurrencyQuery(model!.Right!.Name));
+
+            if (leftCurrency == null
+               || rightCurrency == null)
+            {
+                Results.Json(new { Name = "Incorrect condition" });
+            }
+            var leftCurrencyMainModel = new CurrencyMainModel(leftCurrency!.Name, leftCurrency.Value, model.Left.Amount);
+            var rightCurrencyMainModel = new CurrencyMainModel(rightCurrency!.Name, rightCurrency.Value, model.Right.Amount);
+
+            return Results.Json(new ComapreTwoCurrenciesModel(leftCurrencyMainModel, rightCurrencyMainModel));
+        }
     }
 }
