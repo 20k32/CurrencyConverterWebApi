@@ -8,7 +8,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Models;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
+using static System.Net.WebRequestMethods;
 
 namespace CurrencyConverter.WebApi.Controllers
 {
@@ -26,7 +28,7 @@ namespace CurrencyConverter.WebApi.Controllers
         private async Task UpdateDatabseAndMemoryCache()
         {
             Client.DefaultRequestHeaders.Add("Accept", "application/json");
-            var apiModel = await Client.GetFromJsonAsync<ApiRequestModel>(Settings.CurrentApiUrl);
+            var apiModel = await Client.GetFromJsonAsync<ApiRequestModel>(Settings.BaseApiUrl);
             if (apiModel != null)
             {
                 await Mediator.Send(new SetDataCommandQuery(apiModel));
@@ -52,7 +54,7 @@ namespace CurrencyConverter.WebApi.Controllers
         [HttpGet(Name = "GetConnectionString")]
         public IActionResult GetString()
         {
-            return Content(Settings.CurrentApiUrl);
+            return Content(Settings.BaseApiUrl);
         }
 
         [HttpGet(Name = "GetCurrency/{currency}")]
@@ -96,7 +98,7 @@ namespace CurrencyConverter.WebApi.Controllers
         }
 
         [HttpGet(Name = "CompareCurrencies")]
-        public async Task<IResult> CompareCurrencies([FromQuery] CurrencyFromQueryModel? model)
+        public async Task<IResult> CompareCurrencies([FromQuery] CompareCurrencyFromQueryModel? model)
         {
             if(model == null || model.Left == null || model.Right == null)
             {
@@ -120,6 +122,23 @@ namespace CurrencyConverter.WebApi.Controllers
             var rightCurrencyMainModel = new CurrencyMainModel(rightCurrency!.Name, rightCurrency.Value, model.Right.Amount);
 
             return Results.Json(new ComapreTwoCurrenciesModel(leftCurrencyMainModel, rightCurrencyMainModel));
+        }
+
+        [HttpGet(Name = "ConvertCurrency")]
+        public async Task<IResult> ConvertCurrency
+            ([FromQuery] CurrencyFromQueryDTO? currentCurrency,
+             [FromQuery] string? compareToCurrency)
+        {
+            if(currentCurrency == null || compareToCurrency == null)
+            {
+                return Results.Json(new { Name = "Incorrect condition" });
+            }
+
+            var requestString = $"{Settings.ConvertApiUrl}/{currentCurrency.Amount}/{currentCurrency.Name}/{compareToCurrency}?{Settings.UserId}";
+
+            var result = await Client.GetStringAsync(requestString);
+
+            return Results.Json(result);
         }
     }
 }

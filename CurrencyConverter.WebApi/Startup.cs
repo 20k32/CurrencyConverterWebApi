@@ -17,7 +17,6 @@ namespace CurrencyConverter.WebApi
 
             Configuration = builder
                 .AddJsonFile("appsettings.json")
-                .AddJsonFile("CachedCurrency.json")
                 .Build();
         }
 
